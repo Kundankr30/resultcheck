@@ -3,35 +3,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Result Downloader</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Result Downloader – SIT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0b0f1a;
+      --border: rgba(255,255,255,0.10);
+      --accent: #4f8ef7;
+      --accent-glow: rgba(79,142,247,0.35);
+      --text-primary: #f0f4ff;
+      --text-muted: rgba(240,244,255,0.45);
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; padding: 24px;
+    }
+    .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.25; animation: drift 12s ease-in-out infinite alternate; }
+    .orb-1 { width: 480px; height: 480px; background: radial-gradient(circle, #4f8ef7, transparent 70%); top: -120px; left: -100px; animation-duration: 14s; }
+    .orb-2 { width: 360px; height: 360px; background: radial-gradient(circle, #a855f7, transparent 70%); bottom: -80px; right: -60px; animation-duration: 10s; animation-delay: -4s; }
+    .orb-3 { width: 260px; height: 260px; background: radial-gradient(circle, #06b6d4, transparent 70%); top: 40%; right: 20%; animation-duration: 16s; animation-delay: -7s; }
+    @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.08); } }
+    .card {
+      position: relative; z-index: 1;
+      background: rgba(13,18,30,0.80);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border); border-radius: 24px;
+      padding: 44px 40px; width: 100%; max-width: 460px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 32px 64px rgba(0,0,0,0.5), 0 0 80px rgba(79,142,247,0.07);
+      animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    .badge {
+      display: inline-block; font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); background: rgba(79,142,247,0.12);
+      border: 1px solid rgba(79,142,247,0.25);
+      padding: 5px 12px; border-radius: 100px; margin-bottom: 18px;
+    }
+    h1 {
+      font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800;
+      line-height: 1.1; letter-spacing: -0.02em;
+      color: var(--text-primary); margin-bottom: 10px;
+    }
+    h1 .accent { color: var(--accent); }
+    .subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; }
+    .subtitle strong { color: var(--text-primary); font-weight: 500; }
+    .notice {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 10px; padding: 12px 16px;
+      font-size: 13px; color: #fbbf24; margin-bottom: 28px;
+    }
+    .notice svg { flex-shrink: 0; stroke: #fbbf24; }
+    .input-group {
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-group:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .prefix {
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
+      color: var(--accent); background: rgba(79,142,247,0.10);
+      border-right: 1px solid var(--border);
+      padding: 0 16px; height: 52px;
+      display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;
+    }
+    input[type="text"] {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text-primary); font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 500; padding: 0 18px; height: 52px; letter-spacing: 0.05em;
+    }
+    input[type="text"]::placeholder { color: var(--text-muted); font-weight: 400; letter-spacing: 0; }
+    .download-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 15px 24px; background: linear-gradient(135deg, #4f8ef7 0%, #3b6fd4 100%);
+      border: none; border-radius: 12px; color: #fff;
+      font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.03em;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 20px rgba(79,142,247,0.30); margin-top: 6px;
+    }
+    .download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,142,247,0.45); }
+    .download-btn:active { transform: translateY(0); }
+    .download-btn.loading { opacity: 0.7; cursor: wait; }
+    .footer-note { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 20px; }
+    @keyframes shake {
+      0%,100% { transform:translateX(0); } 20% { transform:translateX(-6px); }
+      40% { transform:translateX(6px); } 60% { transform:translateX(-4px); } 80% { transform:translateX(4px); }
+    }
+    .shake { animation: shake 0.45s cubic-bezier(0.36,0.07,0.19,0.97) both; border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.25) !important; }
+    @media (max-width: 480px) { .card { padding: 32px 24px; } h1 { font-size: 30px; } }
+  </style>
 </head>
 <body>
-  <h2> -Download Your Result-(enter sic in upper case)</h2>
-  <h3>*First login into ERP in another tab</h3>
-                                            
-  <input type="text" id="codePart" placeholder="Enter your sic in upper case">
-  <button onclick="generateLink()">Download</button>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="card">
+    <div class="badge">SIT BHUBANESWAR</div>
+    <h1>Result <span class="accent">Portal</span></h1>
+    <p class="subtitle">Enter your SIC in <strong>UPPER CASE</strong> to download your semester result</p>
+
+    <div class="notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Please log in to ERP in another tab before proceeding
+    </div>
+
+    <div class="input-group">
+      <div class="prefix">SITBBS</div>
+      <input type="text" id="codePart" placeholder="e.g. 29BCSA69" autocomplete="off" spellcheck="false" />
+    </div>
+
+    <button class="download-btn" onclick="generateLink()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download Result
+    </button>
+
+    <p class="footer-note">Result will open as a PDF. Allow pop-ups if prompted.</p>
+  </div>
 
   <script>
     function generateLink() {
       const codePart = document.getElementById("codePart").value.trim();
-      if (!codePart) {
-        alert("Please enter the code after SITBBS");
-        return;
-      }
-
+      const btn = document.querySelector(".download-btn");
+      if (!codePart) { shakeInput(); return; }
+      btn.classList.add("loading");
+      btn.innerHTML = "Opening…";
       const fullCode = "SITBBS" + codePart;
       const url = `https://erp.silicon.ac.in/estcampus/autonomous_exam/final_semester_result_pdf_download.php?role_code=M1Z5SEVJM2dub0NWWE5GZy82dHh2QT09&student_code=${encodeURIComponent(fullCode)}&semester=undefined`;
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = ""; // This may help force download
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = url; a.download = "";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        btn.classList.remove("loading");
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Result`;
+      }, 600);
     }
+    function shakeInput() {
+      const g = document.querySelector(".input-group");
+      g.classList.add("shake");
+      setTimeout(() => g.classList.remove("shake"), 500);
+    }
+    document.getElementById("codePart").addEventListener("keydown", e => {
+      if (e.key === "Enter") generateLink();
+    });
   </script>
 </body>
 </html>
-
